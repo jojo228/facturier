@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Facturier</title>
+  <meta name="theme-color" content="#1a56db" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Facturier" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #1a56db;
+      --primary-dark: #1e429f;
+      --accent: #e3edff;
+      --text: #111928;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --bg: #f3f4f6;
+      --white: #ffffff;
+      --red: #ef4444;
+      --green: #10b981;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.10);
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 30px 16px 60px;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px 48px;
+    }
+
+    /* ── TOOLBAR ─────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .type-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--border);
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .type-option {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all .18s;
+    }
+    .type-option input { display: none; }
+    .type-option:has(input:checked) {
+      background: var(--white);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .18s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline {
+      background: var(--white);
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+    }
+    .btn-outline:hover { background: var(--accent); }
+    .btn-danger { background: #fee2e2; color: var(--red); border: none; padding: 5px 9px; border-radius: 6px; font-size: 13px; }
+    .btn-danger:hover { background: #fca5a5; }
+    .btn-add { background: #ecfdf5; color: var(--green); border: 1.5px solid var(--green); }
+    .btn-add:hover { background: #d1fae5; }
+
+    /* ── HEADER ──────────────────────────────────────── */
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .company-block { flex: 1; min-width: 220px; }
+    .company-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .company-address, .company-phone {
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 2px;
+      line-height: 1.4;
+    }
+    .invoice-meta input {
+      border: none;
+      border-bottom: 1.5px solid var(--border);
+      outline: none;
+      font-size: 13px;
+      color: var(--text);
+      width: 100%;
+      padding: 3px 0;
+      background: transparent;
+      transition: border-color .2s;
+    }
+    .company-block input:focus, .invoice-meta input:focus {
+      border-bottom-color: var(--primary);
+    }
+    .invoice-meta { text-align: right; min-width: 200px; }
+    .invoice-title {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 13px;
+    }
+    .meta-row label { color: var(--muted); white-space: nowrap; }
+    .invoice-meta input { text-align: right; }
+
+    /* ── CLIENT SECTION ──────────────────────────────── */
+    .client-section {
+      background: var(--accent);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+    .client-section h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--primary);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    .client-col { flex: 1; min-width: 180px; }
+    .field-group { margin-bottom: 7px; }
+    .field-group label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 1px; }
+    .field-group input {
+      border: none;
+      border-bottom: 1.5px solid #c5d5f5;
+      background: transparent;
+      outline: none;
+      font-size: 13.5px;
+      color: var(--text);
+      width: 100%;
+      padding: 2px 0;
+      transition: border-color .2s;
+    }
+    .field-group input:focus { border-bottom-color: var(--primary); }
+
+    /* ── TABLE ───────────────────────────────────────── */
+    .table-wrapper { overflow-x: auto; margin-bottom: 20px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    thead tr {
+      background: var(--primary);
+      color: #fff;
+    }
+    thead th {
+      padding: 11px 10px;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    thead th:last-child { text-align: center; width: 44px; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+    tbody tr:hover { background: #f8faff; }
+    tbody td { padding: 7px 6px; vertical-align: middle; }
+
+    .td-num { text-align: center; color: var(--muted); font-size: 12px; width: 34px; }
+    .td-action { text-align: center; width: 44px; }
+    .td-montant { text-align: right; font-weight: 600; color: var(--primary); white-space: nowrap; }
+
+    tbody input[type="text"],
+    tbody input[type="number"] {
+      width: 100%;
+      border: 1.5px solid transparent;
+      border-radius: 5px;
+      padding: 5px 7px;
+      font-size: 13px;
+      background: transparent;
+      outline: none;
+      transition: border-color .18s, background .18s;
+      color: var(--text);
+    }
+    tbody input:focus {
+      border-color: var(--primary);
+      background: #f0f6ff;
+    }
+    .col-desig { min-width: 180px; }
+    .col-qte   { width: 70px; }
+    .col-pu    { width: 100px; }
+    .col-remise{ width: 80px; }
+    .col-montant{ width: 110px; }
+
+    .add-row-wrap { margin-bottom: 24px; }
+
+    /* ── TOTALS ──────────────────────────────────────── */
+    .totals-section {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .totals-box {
+      width: 320px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 16px;
+      font-size: 13.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    .totals-row:last-child { border-bottom: none; }
+    .totals-row label { color: var(--muted); font-size: 13px; }
+    .totals-row .val { font-weight: 600; color: var(--text); }
+    .totals-row.avance-row { background: #fff7ed; }
+    .totals-row.avance-row label { color: #b45309; }
+    .totals-row.avance-row .val { color: #b45309; }
+    .avance-input {
+      width: 120px;
+      border: 1.5px solid #fcd34d;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #b45309;
+      text-align: right;
+      outline: none;
+      background: #fffbeb;
+      transition: border-color .2s;
+    }
+    .avance-input:focus { border-color: #f59e0b; }
+    .totals-row.total-final {
+      background: var(--primary);
+      color: #fff;
+    }
+    .totals-row.total-final label { color: #c7d9ff; font-weight: 700; font-size: 14px; }
+    .totals-row.total-final .val { color: #fff; font-size: 16px; font-weight: 800; }
+    .totals-row.reste-row { background: #f0fdf4; }
+    .totals-row.reste-row label { color: var(--green); font-weight: 700; }
+    .totals-row.reste-row .val { color: var(--green); font-size: 15px; font-weight: 800; }
+    .facture-only { display: flex !important; }
+    .facture-only.hidden { display: none !important; }
+
+    /* ── NOTE ────────────────────────────────────────── */
+    .note-section { margin-top: 28px; }
+    .note-section label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+    .note-section textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--text);
+      resize: vertical;
+      min-height: 60px;
+      outline: none;
+      transition: border-color .2s;
+      font-family: inherit;
+    }
+    .note-section textarea:focus { border-color: var(--primary); }
+
+    /* ── FOOTER ──────────────────────────────────────── */
+    .invoice-footer {
+      margin-top: 36px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+    .invoice-footer input {
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      outline: none;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      background: transparent;
+      width: 320px;
+    }
+
+    /* ── RESPONSIVE (mobile / téléphone) ───────────────── */
+    @media (max-width: 640px) {
+      body { padding: 12px 10px 40px; }
+      .page { padding: 20px 16px; border-radius: 0; }
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .type-toggle { justify-content: center; }
+      .type-option { flex: 1; justify-content: center; padding: 10px 12px; font-size: 14px; }
+      .toolbar .btn {
+        min-height: 44px;
+        padding: 12px 16px;
+        font-size: 15px;
+        justify-content: center;
+      }
+      .invoice-header {
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .company-block { min-width: 0; }
+      .company-name { font-size: 18px; margin-bottom: 4px; }
+      .company-address, .company-phone { font-size: 12px; }
+      .invoice-meta {
+        min-width: 0;
+        text-align: left;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+      }
+      .invoice-title { font-size: 22px; margin-bottom: 12px; }
+      .meta-row { justify-content: flex-start; }
+      .invoice-meta input { text-align: left; }
+      .client-section {
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 16px;
+        margin-bottom: 20px;
+      }
+      .client-col { min-width: 0; }
+      .field-group input { font-size: 16px; padding: 8px 0; }
+      .table-wrapper {
+        margin-left: -16px;
+        margin-right: -16px;
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      table { font-size: 12px; min-width: 520px; }
+      thead th { padding: 10px 6px; font-size: 11px; }
+      tbody td { padding: 6px 4px; }
+      tbody input[type="text"],
+      tbody input[type="number"] {
+        font-size: 16px;
+        padding: 8px 6px;
+        min-height: 44px;
+      }
+      .col-desig { min-width: 140px; }
+      .col-qte { width: 56px; }
+      .col-pu { width: 80px; }
+      .col-remise { width: 64px; }
+      .add-row-wrap { margin-bottom: 20px; padding: 0 4px; }
+      .btn-add { width: 100%; justify-content: center; min-height: 44px; padding: 12px; }
+      .totals-section { justify-content: stretch; }
+      .totals-box { width: 100%; max-width: none; }
+      .totals-row { padding: 10px 14px; font-size: 14px; }
+      .avance-input {
+        width: 100%;
+        min-height: 44px;
+        font-size: 16px;
+        padding: 8px 12px;
+      }
+      .totals-row.total-final .val { font-size: 18px; }
+      .totals-row.reste-row .val { font-size: 16px; }
+      .note-section { margin-top: 24px; }
+      .note-section textarea { font-size: 16px; min-height: 80px; padding: 12px; }
+      .invoice-footer { margin-top: 28px; padding-top: 14px; }
+      .invoice-footer input { width: 100%; max-width: none; font-size: 14px; }
+    }
+
+    @media (max-width: 380px) {
+      .company-name { font-size: 16px; }
+      .invoice-title { font-size: 20px; }
+      .type-option span { font-size: 13px; }
+    }
+
+    /* ── PRINT ───────────────────────────────────────── */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; padding: 20px 28px; }
+      .toolbar, .btn-danger, .btn-add, .add-row-wrap { display: none !important; }
+      .no-print { display: none !important; }
+      input, textarea {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      .avance-input { border: none !important; background: transparent !important; }
+      .facture-only.hidden { display: none !important; }
+      tbody input { padding: 5px 7px !important; }
+      .totals-row.total-final { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .client-section { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page" id="invoice">
+
+  <!-- TOOLBAR -->
+  <div class="toolbar no-print">
+    <div class="type-toggle">
+      <label class="type-option">
+        <input type="radio" name="invoiceType" value="facture" checked onchange="setInvoiceType('facture')" />
+        <span>Facture</span>
+      </label>
+      <label class="type-option">
+        <input type="radio" name="invoiceType" value="proforma" onchange="setInvoiceType('proforma')" />
+        <span>Proforma</span>
+      </label>
+    </div>
+    <button class="btn btn-outline" onclick="resetFacture()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      Réinitialiser
+    </button>
+    <button class="btn btn-primary" onclick="window.print()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimer
+    </button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="invoice-header">
+    <div class="company-block">
+      <div class="company-name">ETS HAND OF GOD</div>
+      <div class="company-address">Vente et installation des appareils electroniques <br> Montages des consoles et des baffles haute gammes</div>
+      <div class="company-phone"><b>(+228) 90 09 04 67 / 96 64 64 98</b></div>
+    </div>
+
+    <div class="invoice-meta">
+      <div class="invoice-title" id="invoiceTitle">Facture</div>
+      <div class="meta-row">
+        <label>N° :</label>
+        <input type="text" id="invoiceNum" placeholder="FA-0001" style="width:110px" />
+      </div>
+      <div class="meta-row">
+        <label>Date :</label>
+        <input type="date" id="invoiceDate" style="width:140px" />
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- CLIENT -->
+  <div class="client-section">
+    <div class="client-col">
+      <h3>Facturer à</h3>
+      <div class="field-group"><label>Nom / Société</label><input type="text" id="clientName" placeholder="Nom du client" /></div>
+    </div>
+    <div class="client-col">
+      <h3>&nbsp;</h3>
+      <div class="field-group"><label>Téléphone</label><input type="text" id="clientPhone" placeholder="Téléphone" /></div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrapper">
+    <table id="itemsTable">
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th class="col-desig">Désignation</th>
+          <th class="col-qte">Qté</th>
+          <th class="col-pu">P.U.</th>
+          <th class="col-remise">Remise %</th>
+          <th class="col-montant" style="text-align:right">Montant</th>
+          <th class="no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="itemsBody">
+        <!-- rows injected by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="add-row-wrap no-print">
+    <button class="btn btn-add" onclick="addRow()">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter une ligne
+    </button>
+  </div>
+
+  <!-- TOTALS -->
+  <div class="totals-section">
+    <div class="totals-box">
+      <div class="totals-row">
+        <label>Sous-total</label>
+        <span class="val" id="subtotal">0,00</span>
+      </div>
+      <div class="totals-row">
+        <label>Remise totale</label>
+        <span class="val" id="totalDiscount">0,00</span>
+      </div>
+      <div class="totals-row total-final">
+        <label>TOTAL</label>
+        <span class="val" id="totalTTC">0,00</span>
+      </div>
+      <div class="totals-row avance-row facture-only" id="avanceRow">
+        <label>Avance versée</label>
+        <input class="avance-input" type="number" id="avance" placeholder="0,00" min="0" oninput="calcReste()" />
+      </div>
+      <div class="totals-row reste-row facture-only" id="resteRow">
+        <label>Reste à payer</label>
+        <span class="val" id="reste">0,00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTE -->
+  <div class="note-section">
+    <label>Remarques / Conditions de paiement</label>
+    <textarea id="noteField" placeholder="Ex : Paiement sous 30 jours. Merci pour votre confiance."></textarea>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="invoice-footer">
+    <input type="text" id="footerText" placeholder="Mentions légales ou slogan de l'entreprise" />
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  let rowCount = 0;
+  let invoiceType = 'facture';
+
+  // ── Type Facture / Proforma ──────────────────────────
+  function setInvoiceType(type) {
+    invoiceType = type;
+    document.getElementById('invoiceTitle').textContent = type === 'facture' ? 'Facture' : 'Proforma';
+    const avanceRow = document.getElementById('avanceRow');
+    const resteRow = document.getElementById('resteRow');
+    if (type === 'proforma') {
+      avanceRow.classList.add('hidden');
+      resteRow.classList.add('hidden');
+    } else {
+      avanceRow.classList.remove('hidden');
+      resteRow.classList.remove('hidden');
+      calcReste();
+    }
+  }
+
+  // ── Init with date + 3 rows ──────────────────────────
+  window.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('invoiceDate').value = today;
+    addRow(); addRow(); addRow();
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  });
+
+  // ── Format number ────────────────────────────────────
+  function fmt(n) {
+    return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // ── Add a row ────────────────────────────────────────
+  function addRow() {
+    rowCount++;
+    const tbody = document.getElementById('itemsBody');
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + rowCount;
+    tr.innerHTML = `
+      <td class="td-num">${rowCount}</td>
+      <td><input type="text" class="col-desig" placeholder="Description de l'article ou service" /></td>
+      <td><input type="number" class="col-qte inp-qte" placeholder="1" min="0" step="any" oninput="calcRow(this)" /></td>
+      <td><input type="number" class="col-pu inp-pu" placeholder="0" min="0" step="any" oninput="calcRow(this)" /></td>
+      <td><input type="number" class="col-remise inp-remise" placeholder="0" min="0" max="100" step="any" oninput="calcRow(this)" /></td>
+      <td class="td-montant"><span class="row-montant">0,00</span></td>
+      <td class="td-action no-print">
+        <button class="btn btn-danger" onclick="removeRow(${rowCount})" title="Supprimer">✕</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+    updateNumbers();
+  }
+
+  // ── Remove a row ─────────────────────────────────────
+  function removeRow(id) {
+    const row = document.getElementById('row-' + id);
+    if (row) row.remove();
+    updateNumbers();
+    calcTotals();
+  }
+
+  // ── Update row numbers ────────────────────────────────
+  function updateNumbers() {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    rows.forEach((tr, i) => {
+      const numCell = tr.querySelector('.td-num');
+      if (numCell) numCell.textContent = i + 1;
+    });
+  }
+
+  // ── Calculate one row ─────────────────────────────────
+  function calcRow(input) {
+    const tr = input.closest('tr');
+    const qte    = parseFloat(tr.querySelector('.inp-qte').value)    || 0;
+    const pu     = parseFloat(tr.querySelector('.inp-pu').value)     || 0;
+    const remise = parseFloat(tr.querySelector('.inp-remise').value) || 0;
+    const montant = qte * pu * (1 - remise / 100);
+    tr.querySelector('.row-montant').textContent = fmt(montant);
+    calcTotals();
+  }
+
+  // ── Calculate totals ──────────────────────────────────
+  function calcTotals() {
+    const rows = document.querySelectorAll('#itemsBody tr');
+    let subtotalBrut = 0;
+    let totalNet = 0;
+
+    rows.forEach(tr => {
+      const qte    = parseFloat(tr.querySelector('.inp-qte')?.value)    || 0;
+      const pu     = parseFloat(tr.querySelector('.inp-pu')?.value)     || 0;
+      const remise = parseFloat(tr.querySelector('.inp-remise')?.value) || 0;
+      subtotalBrut += qte * pu;
+      totalNet     += qte * pu * (1 - remise / 100);
+    });
+
+    const totalRemise = subtotalBrut - totalNet;
+
+    document.getElementById('subtotal').textContent      = fmt(subtotalBrut);
+    document.getElementById('totalDiscount').textContent = '- ' + fmt(totalRemise);
+    document.getElementById('totalTTC').textContent      = fmt(totalNet);
+    if (invoiceType === 'facture') calcReste(totalNet);
+  }
+
+  // ── Calculate reste ───────────────────────────────────
+  function calcReste(total) {
+    if (invoiceType === 'proforma') return;
+    if (total === undefined) {
+      const txt = document.getElementById('totalTTC').textContent.replace(/\s/g, '').replace(',', '.');
+      total = parseFloat(txt) || 0;
+    }
+    const avance = parseFloat(document.getElementById('avance').value) || 0;
+    const reste  = Math.max(0, total - avance);
+    document.getElementById('reste').textContent = fmt(reste);
+  }
+
+  // ── Reset ─────────────────────────────────────────────
+  function resetFacture() {
+    if (!confirm('Réinitialiser la facture ? Toutes les données seront perdues.')) return;
+    document.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => el.value = '');
+    document.getElementById('itemsBody').innerHTML = '';
+    rowCount = 0;
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('invoiceDate').value = today;
+    document.querySelector('input[name="invoiceType"][value="facture"]').checked = true;
+    setInvoiceType('facture');
+    addRow(); addRow(); addRow();
+    calcTotals();
+  }
+</script>
+
+</body>
+</html>
