@@ -332,7 +332,7 @@
     }
 
     /* ── RESPONSIVE (mobile / téléphone) ───────────────── */
-    @media (max-width: 640px) {
+    @media screen and (max-width: 640px) {
       body { padding: 12px 10px 40px; }
       .page { padding: 20px 16px; border-radius: 0; }
       .toolbar {
@@ -413,16 +413,25 @@
       .invoice-footer input { width: 100%; max-width: none; font-size: 14px; }
     }
 
-    @media (max-width: 380px) {
+    @media screen and (max-width: 380px) {
       .company-name { font-size: 16px; }
       .invoice-title { font-size: 20px; }
       .type-option span { font-size: 13px; }
     }
 
     /* ── PRINT ───────────────────────────────────────── */
+    @page { size: A4; margin: 12mm; }
     @media print {
-      body { background: #fff; padding: 0; }
-      .page { box-shadow: none; border-radius: 0; padding: 20px 28px; }
+      html, body { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .page {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        width: 210mm;
+        max-width: 210mm;
+        margin: 0 auto !important;
+        padding: 0 !important;
+      }
       .toolbar, .btn-danger, .btn-add, .add-row-wrap { display: none !important; }
       .no-print { display: none !important; }
       input, textarea {
@@ -433,6 +442,9 @@
       .avance-input { border: none !important; background: transparent !important; }
       .facture-only.hidden { display: none !important; }
       tbody input { padding: 5px 7px !important; }
+      .invoice-header, .client-section { flex-wrap: nowrap !important; }
+      .table-wrapper { overflow: visible !important; margin: 0 0 20px !important; padding: 0 !important; }
+      table { min-width: 0 !important; width: 100% !important; }
       .totals-row.total-final { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .client-section { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
