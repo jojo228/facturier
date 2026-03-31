@@ -443,6 +443,14 @@
       .facture-only.hidden { display: none !important; }
       tbody input { padding: 5px 7px !important; }
       .invoice-header, .client-section { flex-wrap: nowrap !important; }
+      /* iOS Safari print: flex can stack/wrap unexpectedly */
+      .invoice-meta { text-align: right !important; }
+      .meta-row { display: table !important; width: 100% !important; table-layout: fixed !important; }
+      .meta-row label { display: table-cell !important; width: 20mm !important; white-space: nowrap !important; }
+      .meta-row input { display: table-cell !important; width: auto !important; }
+
+      .client-section { display: table !important; width: 100% !important; table-layout: fixed !important; }
+      .client-col { display: table-cell !important; width: 50% !important; vertical-align: top !important; }
       .table-wrapper { overflow: visible !important; margin: 0 0 20px !important; padding: 0 !important; }
       table { min-width: 0 !important; width: 100% !important; }
       .totals-row.total-final { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
