@@ -1,6 +1,6 @@
 /* Basic offline cache for a single-file app. */
 const CACHE_NAME = 'facturier-v1';
-const ASSETS = ['./', './facturier.html', './manifest.webmanifest'];
+const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -32,7 +32,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
           return resp;
         })
-        .catch(() => caches.match('./facturier.html'));
+        .catch(() => caches.match('./index.html'));
     })
   );
 });

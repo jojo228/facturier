@@ -1,7 +1,7 @@
 {
   "name": "Facturier",
   "short_name": "Facturier",
-  "start_url": "./facturier.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
